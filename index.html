@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="评论小助手" />
+    <link rel="icon" href="data:," />
+    <title>中文转英文评论小助手</title>
+    <style>
+      :root{
+        --bg:#000000;
+        --panel:#0d0f12;
+        --panel-2:#16181d;
+        --line:#262a31;
+        --line-soft:#1c1f24;
+        --text:#f2f3f5;
+        --muted:#9aa0a8;
+        --faint:#6b7178;
+        --accent:#1d9bf0;
+        --accent-press:#1a8cd8;
+        --gold:#e8b93e;
+        --danger:#f0564f;
+        --ok:#3fb97c;
+        --radius:14px;
+      }
+      *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+      html,body{ margin:0; padding:0; }
+      body{
+        background:var(--bg);
+        color:var(--text);
+        font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+        font-size:16px;
+        line-height:1.5;
+        padding-bottom:env(safe-area-inset-bottom);
+      }
+      button, [role="button"], select, summary,
+      input:not([type="checkbox"],[type="radio"]), textarea{ min-height:2.25rem; }
+      button{ font-family:inherit; cursor:pointer; }
+
+      .wrap{
+        max-width:560px;
+        margin:0 auto;
+        padding:14px 16px 40px;
+      }
+
+      /* ---------- flow hint ---------- */
+      .flow{
+        display:flex; align-items:center; gap:8px;
+        color:var(--faint); font-size:12.5px;
+        padding:2px 2px 14px;
+        flex-wrap:wrap;
+      }
+      .flow b{ color:var(--muted); font-weight:600; }
+      .flow .arr{ color:#3a3f47; }
+
+      /* ---------- fields ---------- */
+      .field{ margin-bottom:14px; }
+      .field-head{
+        display:flex; align-items:baseline; justify-content:space-between;
+        margin-bottom:7px; padding:0 2px;
+      }
+      .field label{
+        font-size:14px; font-weight:600; color:var(--text);
+        display:flex; align-items:center; gap:7px;
+      }
+      .field label .opt{
+        font-size:11.5px; font-weight:500; color:var(--faint);
+        border:1px solid var(--line); border-radius:999px; padding:1px 8px;
+      }
+      .mini-btn{
+        background:none; border:none; color:var(--accent);
+        font-size:13px; font-weight:600; padding:6px 8px; min-height:36px;
+      }
+      .mini-btn:active{ opacity:.6; }
+      .mini-btn.dim{ color:var(--faint); }
+      textarea{
+        width:100%;
+        background:var(--panel);
+        border:1px solid var(--line);
+        border-radius:var(--radius);
+        color:var(--text);
+        font-family:inherit;
+        font-size:16px; /* >=16px stops iOS auto-zoom */
+        line-height:1.55;
+        padding:12px 14px;
+        resize:vertical;
+        outline:none;
+        transition:border-color .15s;
+      }
+      textarea:focus{ border-color:var(--accent); }
+      textarea::placeholder{ color:#565c64; }
+      #postInput{ min-height:74px; }
+      #myInput{ min-height:104px; }
+      .count{ font-size:12px; color:var(--faint); font-variant-numeric:tabular-nums; }
+
+      /* quick mood chips */
+      .moods{ display:flex; gap:8px; flex-wrap:wrap; margin:-2px 0 14px; }
+      .mood{
+        background:var(--panel-2); border:1px solid var(--line);
+        color:var(--muted); border-radius:999px;
+        font-size:13px; padding:7px 13px; min-height:38px;
+      }
+      .mood:active{ border-color:var(--accent); color:var(--text); }
+
+      /* ---------- key notice ---------- */
+      .notice{
+        display:none;
+        border:1px solid #4a3a14;
+        background:#171307;
+        color:#e9cf8a;
+        border-radius:var(--radius);
+        padding:12px 14px;
+        font-size:14px; line-height:1.6;
+        margin-bottom:14px;
+      }
+      .notice.show{ display:block; }
+      .notice button{
+        margin-top:8px;
+        background:var(--gold); color:#171200; border:none;
+        border-radius:9px; font-size:14px; font-weight:700;
+        padding:9px 16px; min-height:42px;
+      }
+
+      /* ---------- generate button ---------- */
+      .gen-btn{
+        width:100%;
+        background:var(--accent);
+        color:#fff;
+        border:none;
+        border-radius:999px;
+        font-size:18px; font-weight:800;
+        padding:15px 20px;
+        min-height:56px;
+        letter-spacing:.02em;
+        transition:background .15s, transform .05s;
+      }
+      .gen-btn:active{ background:var(--accent-press); transform:scale(.99); }
+      .gen-btn[disabled]{ background:#2c4a5e; color:#8fb8d4; }
+      .gen-btn .spin{
+        display:inline-block; width:16px; height:16px; vertical-align:-2px;
+        border:2.5px solid rgba(255,255,255,.35); border-top-color:#fff;
+        border-radius:50%; margin-right:9px;
+        animation:spin .7s linear infinite;
+      }
+      @keyframes spin{ to{ transform:rotate(360deg); } }
+
+      .error{
+        display:none;
+        margin-top:12px;
+        border:1px solid #54211e;
+        background:#1c0b0a;
+        color:#f3a49f;
+        border-radius:var(--radius);
+        padding:11px 14px; font-size:14px; line-height:1.55;
+      }
+      .error.show{ display:block; }
+
+      /* ---------- results ---------- */
+      .results-head{
+        display:none;
+        align-items:baseline; justify-content:space-between;
+        margin:22px 2px 10px;
+      }
+      .results-head.show{ display:flex; }
+      .results-head h2{ font-size:15px; margin:0; font-weight:700; }
+      .results-head span{ font-size:12.5px; color:var(--faint); }
+
+      .card{
+        width:100%;
+        text-align:left;
+        background:var(--panel-2);
+        border:1px solid var(--line);
+        border-radius:var(--radius);
+        padding:14px 15px 12px;
+        margin-bottom:10px;
+        color:var(--text);
+        display:block;
+        transition:border-color .15s, background .15s;
+      }
+      .card:active{ border-color:var(--accent); background:#101820; }
+      .card.copied{ border-color:var(--ok); }
+      .card-top{
+        display:flex; align-items:center; justify-content:space-between;
+        margin-bottom:7px;
+      }
+      .tag{
+        font-size:12px; font-weight:700; letter-spacing:.04em;
+        padding:3px 10px; border-radius:999px;
+      }
+      .tag.roast{ background:#3a1410; color:#ff9d8a; }
+      .tag.plain{ background:#12283a; color:#7cc4f5; }
+      .tag.meme{ background:#2e2410; color:#f0cd6d; }
+      .tag.faithful{ background:#123528; color:#7cd6a8; }
+      .tag.free{ background:#241b3a; color:#c9aef7; }
+      .copy-hint{ font-size:12px; color:var(--faint); display:flex; align-items:center; gap:5px; }
+      .copy-hint svg{ width:14px; height:14px; }
+      .card.copied .copy-hint{ color:var(--ok); }
+      .en{
+        font-size:16.5px; line-height:1.5; font-weight:550;
+        white-space:pre-wrap; word-break:break-word;
+      }
+      .zh{
+        margin-top:8px; padding-top:8px;
+        border-top:1px solid var(--line-soft);
+        font-size:13.5px; color:var(--muted); line-height:1.55;
+        white-space:pre-wrap; word-break:break-word;
+      }
+      .en-count{ font-size:11.5px; color:var(--faint); margin-top:6px; font-variant-numeric:tabular-nums; }
+
+      /* per-style slots while the parallel requests are in flight */
+      .card.slot{ cursor:default; }
+      .card.slot:active{ border-color:var(--line); background:var(--panel-2); }
+      .slot-pending{
+        display:flex; align-items:center; gap:9px;
+        color:var(--faint); font-size:14.5px; padding:8px 0 6px;
+      }
+      .mini-spin{
+        width:14px; height:14px; flex:none;
+        border:2px solid rgba(255,255,255,.18); border-top-color:var(--accent);
+        border-radius:50%;
+        animation:spin .7s linear infinite;
+      }
+      .slot-fail{ color:#f3a49f; font-size:14.5px; line-height:1.55; padding:4px 0 2px; }
+      .slot-note{ color:var(--muted); font-size:14.5px; line-height:1.6; padding:4px 0 2px; }
+      .retry-btn{
+        margin-top:10px;
+        background:var(--panel); border:1px solid var(--line);
+        color:var(--text); border-radius:9px;
+        font-size:13.5px; font-weight:700; padding:8px 14px; min-height:38px;
+      }
+      .retry-btn:active{ border-color:var(--accent); }
+
+      .skeleton{ display:none; margin-top:22px; }
+      .skeleton.show{ display:block; }
+      .skel{
+        height:104px; border-radius:var(--radius);
+        background:linear-gradient(100deg,var(--panel) 40%,var(--panel-2) 50%,var(--panel) 60%);
+        background-size:200% 100%;
+        animation:shimmer 1.2s infinite;
+        margin-bottom:10px;
+      }
+      @keyframes shimmer{ to{ background-position:-200% 0; } }
+
+      /* ---------- settings ---------- */
+      .settings{
+        margin-top:30px;
+        border-top:1px solid var(--line-soft);
+        padding-top:6px;
+      }
+      .settings summary{
+        list-style:none;
+        display:flex; align-items:center; gap:8px;
+        font-size:14px; font-weight:600; color:var(--muted);
+        padding:12px 2px; cursor:pointer; min-height:44px;
+      }
+      .settings summary::-webkit-details-marker{ display:none; }
+      .settings summary .chev{ margin-left:auto; color:var(--faint); transition:transform .2s; font-size:12px; }
+      .settings[open ] summary .chev{ transform:rotate(180deg); }
+      .dot{ width:8px; height:8px; border-radius:50%; background:var(--danger); flex:none; }
+      .dot.ok{ background:var(--ok); }
+      .key-status{ font-size:12.5px; color:var(--faint); font-weight:500; }
+      .settings-body{ padding:2px 2px 8px; }
+      .settings-body p{ font-size:13.5px; color:var(--muted); line-height:1.65; margin:0 0 10px; }
+      .settings-body a{ color:var(--accent); }
+      .key-row{ display:flex; gap:8px; }
+      .key-row input{
+        flex:1; min-width:0;
+        background:var(--panel); border:1px solid var(--line);
+        border-radius:11px; color:var(--text);
+        font-size:14px; padding:11px 12px; outline:none;
+        font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+      }
+      .key-row input:focus{ border-color:var(--accent); }
+      .model-note{ text-align:center; font-size:12.5px; color:var(--faint); margin:9px 0 0; }
+
+      /* ---------- usage / cost ---------- */
+      .usage-btn{
+        display:block; margin:10px auto 0;
+        background:none; border:1px solid var(--line); border-radius:999px;
+        color:var(--muted); font-size:13px; font-weight:600;
+        padding:8px 16px; min-height:38px;
+      }
+      .usage-btn:active{ border-color:var(--accent); color:var(--text); }
+      .usage-panel{
+        display:none;
+        margin-top:12px;
+        border:1px solid var(--line); border-radius:var(--radius);
+        background:var(--panel); padding:13px 15px 11px;
+      }
+      .usage-panel.show{ display:block; }
+      .usage-row{
+        display:flex; justify-content:space-between; gap:12px;
+        font-size:13.5px; color:var(--muted); padding:5px 0;
+        border-bottom:1px solid var(--line-soft);
+      }
+      .usage-row:last-of-type{ border-bottom:none; }
+      .usage-row b{ color:var(--text); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+      .usage-row.total{ color:var(--text); font-weight:600; }
+      .usage-reset{
+        margin-top:10px;
+        background:none; border:none; color:var(--danger);
+        font-size:13px; padding:8px 4px; min-height:38px;
+      }
+      .model-row{ display:flex; align-items:center; gap:10px; margin:14px 0 4px; }
+      .model-row label{ font-size:14px; font-weight:600; color:var(--text); flex:none; }
+      .model-row select{
+        flex:1; min-width:0;
+        background:var(--panel); border:1px solid var(--line);
+        border-radius:11px; color:var(--text);
+        font-size:14px; padding:11px 12px; outline:none;
+        font-family:inherit;
+      }
+      .model-row select:focus{ border-color:var(--accent); }
+      .key-save{
+        background:var(--panel-2); border:1px solid var(--line);
+        color:var(--text); border-radius:11px;
+        font-size:14px; font-weight:700; padding:11px 18px; min-height:46px;
+        flex:none;
+      }
+      .key-save:active{ border-color:var(--accent); }
+      .key-actions{ display:flex; gap:8px; margin-top:10px; }
+      .key-actions button{
+        background:none; border:none; font-size:13px; padding:8px 4px; min-height:38px;
+      }
+      #toggleKeyBtn{ color:var(--muted); }
+      #clearKeyBtn{ color:var(--danger); }
+      .privacy{ font-size:12.5px; color:var(--faint); line-height:1.6; margin-top:10px; }
+
+      /* ---------- toast ---------- */
+      .toast{
+        position:fixed; left:50%; bottom:calc(26px + env(safe-area-inset-bottom));
+        transform:translate(-50%, 16px);
+        background:#e8f6ee; color:#0c2e1c;
+        font-size:15px; font-weight:700;
+        padding:12px 20px; border-radius:999px;
+        box-shadow:0 8px 28px rgba(0,0,0,.55);
+        opacity:0; pointer-events:none;
+        transition:opacity .22s, transform .22s;
+        z-index:50; white-space:nowrap;
+        max-width:calc(100vw - 32px);
+      }
+      .toast.show{ opacity:1; transform:translate(-50%, 0); }
+      .toast.err{ background:#fdeceb; color:#571512; }
+
+      @media (prefers-reduced-motion: reduce){
+        .gen-btn .spin, .skel, .mini-spin{ animation:none; }
+        .toast{ transition:none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+
+      <div class="flow" aria-hidden="true">
+        <span><b>1</b> 写中文</span><span class="arr">→</span>
+        <span><b>2</b> 生成</span><span class="arr">→</span>
+        <span><b>3</b> 点一条复制</span><span class="arr">→</span>
+        <span><b>4</b> 切回 X 粘贴</span>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="postInput">对方的帖子 <span class="opt">可不填</span></label>
+          <span>
+            <button type="button" class="mini-btn" id="pastePostBtn">粘贴</button>
+            <button type="button" class="mini-btn dim" id="clearPostBtn">清空</button>
+          </span>
+        </div>
+        <textarea id="postInput" rows="3" placeholder="把你要回复的那条帖子粘进来，生成时会扣住它里面的具体细节，不说空话。不填也行。填了还会多出一条「AI 发挥版」：不看你写的话，它自己读帖子写一条。"></textarea>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="myInput">我想说的话（中文）</label>
+          <span>
+            <span class="count" id="myCount">0 字</span>
+            <button type="button" class="mini-btn dim" id="clearMyBtn">清空</button>
+          </span>
+        </div>
+        <textarea id="myInput" rows="4" placeholder="直接说人话就行，比如：这也太离谱了，我的 agent 昨天也自己装了个插件，吓死我了"></textarea>
+      </div>
+
+      <div class="moods" aria-label="语气快捷补充">
+        <button type="button" class="mood" data-add="，语气损一点，往死里吐槽">损一点 🔥</button>
+        <button type="button" class="mood" data-add="，带点自嘲，我就是那个倒霉蛋">自嘲 😭</button>
+        <button type="button" class="mood" data-add="，最后带个反问，问问大家是不是也这样">带个反问 ❓</button>
+        <button type="button" class="mood" data-add="，顺带提一句我也在用 Claude Code 做东西">带上我的事 🛠️</button>
+      </div>
+
+      <div class="notice" id="keyNotice">
+        还没有 API key，生成用不了。去 platform.openai.com 创建一个 API key，粘贴到下面设置里，key 只存在你这台设备本地。
+        <br />
+        <button type="button" id="goSettingsBtn">去设置里粘贴 key</button>
+      </div>
+
+      <button type="button" class="gen-btn" id="genBtn">生成英文</button>
+      <p class="model-note" id="modelNote"></p>
+      <button type="button" class="usage-btn" id="usageBtn">用量 · 已花约 $0.0000（点开看明细）</button>
+      <div class="usage-panel" id="usagePanel">
+        <div id="usageRows"></div>
+        <p class="privacy">按 OpenAI 官方价格、用每次返回的 token 数估算，跟后台真实账单可能差几分钱，看个大概就行。人民币按 1 美元 ≈ 7.3 粗算。统计只存在这台设备本地。</p>
+        <button type="button" class="usage-reset" id="usageResetBtn">统计清零（重新开始数）</button>
+      </div>
+
+      <div class="error" id="errorBox" role="alert"></div>
+
+      <div class="results-head" id="resultsHead">
+        <h2>选一条，点一下就复制</h2>
+        <span id="resultsHint">不满意就再点一次「生成英文」</span>
+      </div>
+      <div id="results"></div>
+
+      <details class="settings" id="settingsBox">
+        <summary>
+          <span class="dot" id="keyDot"></span>
+          设置 · API key 与模型
+          <span class="key-status" id="keyStatus">未设置</span>
+          <span class="chev">▾</span>
+        </summary>
+        <div class="settings-body">
+          <p>去 <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a> 创建一个 API key（sk- 开头），粘贴到这里保存。生成评论走你自己的额度，用一次几乎不花钱。</p>
+          <div class="key-row">
+            <input type="password" id="keyInput" placeholder="sk-…" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <button type="button" class="key-save" id="saveKeyBtn">保存</button>
+          </div>
+          <div class="key-actions">
+            <button type="button" id="toggleKeyBtn">显示 key</button>
+            <button type="button" id="clearKeyBtn">删除 key</button>
+          </div>
+          <div class="model-row">
+            <label for="modelSelect">生成用的模型</label>
+            <select id="modelSelect"></select>
+          </div>
+          <p class="privacy">默认 gpt-5-mini，又快又便宜。某个模型抽风、返回的格式不对时，页面会自动换下一个模型重试，你什么都不用管。</p>
+          <p class="privacy">key 只存在你这台设备的浏览器本地（localStorage），页面只会把它发给 api.openai.com 生成评论，不经过任何其他服务器。</p>
+        </div>
+      </details>
+
+    </main>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var LS_KEY = "kyson_comment_helper_openai_key";
+        var LS_MODEL_KEY = "kyson_comment_helper_model";
+        var API_URL = "https://api.openai.com/v1/chat/completions";
+        var MODELS = [
+          { id: "gpt-5-mini", label: "gpt-5-mini · 默认，快又便宜" },
+          { id: "gpt-5.1", label: "gpt-5.1 · 更聪明，贵一点点" },
+          { id: "gpt-4o-mini", label: "gpt-4o-mini · 老牌稳定款" }
+        ];
+        var FALLBACK_MODELS = MODELS.map(function (m) { return m.id; });
+
+        function getModel() {
+          var saved = "";
+          try { saved = (localStorage.getItem(LS_MODEL_KEY) || "").trim(); } catch (e) {}
+          for (var i = 0; i < MODELS.length; i++) if (MODELS[i].id === saved) return saved;
+          return MODELS[0].id;
+        }
+
+        var SYSTEM_PROMPT = [
+          "The user is a Chinese piano grad student in NYC building an English X account (@KysonBuilds) about his real AI work with Claude Code and Codex. He types what he wants to say in Chinese. Produce 4 English versions of his intended comment: (1) 直译版 strictly faithful translation, (2) 吐槽版 mocking roast — attitude, not plot devices, (3) 正常版 his exact meaning in relaxed everyday chat English with casual frills — never a straight translation, (4) 玩梗版 built entirely around one current internet trope, meme format, or fandom in-joke.",
+          "The four styles must pull clearly apart from each other in HOW they work, not just in tone words. 吐槽版 and 玩梗版 are the pair that must never blur: 吐槽版 runs on attitude only — dry, sharp, dismissive, a little mean; it may use light slang, but NO meme formats, NO fandom in-jokes, NO gif-style reaction lines. 玩梗版 puts its entire weight into one recognized meme or trope (for example \"tell me you X without telling me you X\", POV, \"nobody: ... me:\", it's giving ___, certified ___ moment, rent free, main character energy, skill issue, ___ arc, canon event, NPC energy, \"bro really said ___\") — the humor comes from the format itself, not from roasting anyone. 正常版 sits in a different lane from both: zero jokes, zero memes, zero roast — just how a native speaker would casually say exactly this in everyday chat, and it must never read like a sentence-by-sentence translation (that is 直译版's job).",
+          "直译版 is special and strictly faithful: translate exactly what he said and nothing else. A light sprinkle of natural slang is fine where it fits the wording he already used, but NEVER expand his sentence — do not add jokes, reactions, questions, examples, context, or any meaning he did not say. Keep the English at roughly the same length as his Chinese: if he wrote one short line, the translation is one short line. The other three styles may play and embellish; the 直译版 must not.",
+          "Voice rules, all mandatory: write like a real native user casually replying — fragmented sentences, incomplete thoughts, lowercase starts are fine, loose logic. Slang intensity differs per style: 吐槽版 and 玩梗版 go heavy (slop, cooking, yolo mode, bruh, ngl, lowkey, fr, 💀 😭); 正常版 uses only light, everyday fillers and shortcuts (ngl, tbh, kinda, gonna, yeah, lol); 直译版 stays nearly clean. Hook onto a specific detail of the original post when one is provided, never empty agreement (\"Great post\", \"So true\" are banned); keep each option short like a real reply (1-3 short lines, under ~240 characters); never sound like a product announcement or a listicle; never translate literally — say it the way an American user actually would (this never-translate-literally rule applies to 吐槽版, 正常版, and 玩梗版; 直译版 alone is the faithful translation).",
+          "Also give one short Chinese line under each option translating it back loosely so he knows what he is sending.",
+          "LANGUAGE LOCK (hard rule, no exceptions): the \"en\" field of every option must be 100% English — zero Chinese characters, no pinyin, and never a copy or near-copy of his Chinese sentence. Chinese text appears ONLY in the \"zh\" field. If you catch yourself writing Chinese in \"en\", stop and rewrite that field in English before returning.",
+          "Return ONLY valid JSON, no markdown fences, no extra text: {\"options\":[{\"style\":\"直译版\",\"en\":\"...\",\"zh\":\"...\"},{\"style\":\"吐槽版\",\"en\":\"...\",\"zh\":\"...\"},{\"style\":\"正常版\",\"en\":\"...\",\"zh\":\"...\"},{\"style\":\"玩梗版\",\"en\":\"...\",\"zh\":\"...\"}]}"
+        ].join("\n");
+
+        var postInput = document.getElementById("postInput");
+        var myInput = document.getElementById("myInput");
+        var myCount = document.getElementById("myCount");
+        var genBtn = document.getElementById("genBtn");
+        var errorBox = document.getElementById("errorBox");
+        var resultsHead = document.getElementById("resultsHead");
+        var resultsHint = document.getElementById("resultsHint");
+        var results = document.getElementById("results");
+        var toast = document.getElementById("toast");
+        var keyNotice = document.getElementById("keyNotice");
+        var settingsBox = document.getElementById("settingsBox");
+        var keyInput = document.getElementById("keyInput");
+        var keyDot = document.getElementById("keyDot");
+        var keyStatus = document.getElementById("keyStatus");
+        var modelSelect = document.getElementById("modelSelect");
+        var modelNote = document.getElementById("modelNote");
+
+        var toastTimer = null;
+        function showToast(msg, isErr) {
+          toast.textContent = msg;
+          toast.className = "toast show" + (isErr ? " err" : "");
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { toast.className = "toast"; }, 2400);
+        }
+
+        /* ---------- API key (localStorage only) ---------- */
+        function getKey() {
+          try { return (localStorage.getItem(LS_KEY) || "").trim(); } catch (e) { return ""; }
+        }
+        function refreshKeyUI() {
+          var has = !!getKey();
+          keyDot.className = "dot" + (has ? " ok" : "");
+          keyStatus.textContent = has ? "已保存" : "未设置";
+          keyNotice.className = "notice" + (has ? "" : " show");
+          if (has && !keyInput.value) keyInput.value = getKey();
+        }
+        document.getElementById("saveKeyBtn").addEventListener("click", function () {
+          var v = keyInput.value.trim();
+          if (!v) { showToast("先粘贴 key 再保存", true); return; }
+          if (v.indexOf("sk-") !== 0) { showToast("这个 key 看起来不对，应该是 sk- 开头", true); return; }
+          try { localStorage.setItem(LS_KEY, v); } catch (e) { showToast("保存失败，浏览器不让存", true); return; }
+          refreshKeyUI();
+          hideError();
+          showToast("key 已保存，只存在这台设备上 ✓");
+        });
+        document.getElementById("toggleKeyBtn").addEventListener("click", function () {
+          var show = keyInput.type === "password";
+          keyInput.type = show ? "text" : "password";
+          this.textContent = show ? "隐藏 key" : "显示 key";
+        });
+        document.getElementById("clearKeyBtn").addEventListener("click", function () {
+          try { localStorage.removeItem(LS_KEY); } catch (e) {}
+          keyInput.value = "";
+          refreshKeyUI();
+          showToast("key 已删除");
+        });
+        document.getElementById("goSettingsBtn").addEventListener("click", function () {
+          settingsBox.open = true;
+          settingsBox.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(function () { keyInput.focus(); }, 350);
+        });
+
+        /* ---------- inputs ---------- */
+        function updateCount() { myCount.textContent = myInput.value.trim().length + " 字"; }
+        myInput.addEventListener("input", updateCount);
+        document.getElementById("clearPostBtn").addEventListener("click", function () {
+          postInput.value = ""; postInput.focus();
+        });
+        document.getElementById("clearMyBtn").addEventListener("click", function () {
+          myInput.value = ""; updateCount(); myInput.focus();
+        });
+        document.getElementById("pastePostBtn").addEventListener("click", function () {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(function (t) {
+              if (t) { postInput.value = t; showToast("已粘贴对方的帖子"); }
+              else showToast("剪贴板是空的", true);
+            }).catch(function () { showToast("读不到剪贴板，长按输入框粘贴吧", true); });
+          } else {
+            showToast("长按输入框粘贴吧", true);
+            postInput.focus();
+          }
+        });
+        var moodBtns = document.querySelectorAll(".mood");
+        for (var i = 0; i < moodBtns.length; i++) {
+          moodBtns[i].addEventListener("click", function () {
+            var add = this.getAttribute("data-add") || "";
+            var v = myInput.value;
+            if (v.indexOf(add) === -1) myInput.value = v + add;
+            updateCount();
+            myInput.focus();
+          });
+        }
+
+        /* ---------- errors ---------- */
+        function showError(msg) { errorBox.textContent = msg; errorBox.className = "error show"; }
+        function hideError() { errorBox.className = "error"; errorBox.textContent = ""; }
+
+        function friendlyError(status, detail) {
+          if (status === 401 || status === 403) return "key 不对或者已经失效了。去下面设置里检查一下，或者换一个新 key。";
+          if (status === 429) return "额度用完或者请求太频繁了。稍等一会儿再试；还不行就去 OpenAI 后台看看余额。";
+          if (status === 400) return "OpenAI 把请求退回来了（400）" + (detail ? "，它说：" + detail : "") + "。页面已经自动换过其他模型重试了还不行，稍等一会儿再点一次。";
+          if (status === 404) return "设置里的这几个模型现在都调不通。稍等一会儿再试一次。";
+          if (status >= 500) return "OpenAI 那边出问题了，稍等一会儿再试。";
+          return "生成失败了（错误 " + status + "）。再点一次试试，还不行就检查一下 key 和额度。";
+        }
+
+        /* ---------- copy ---------- */
+        function copyText(text, card) {
+          function done() {
+            var cards = results.querySelectorAll(".card");
+            for (var j = 0; j < cards.length; j++) {
+              cards[j].classList.remove("copied");
+              var h = cards[j].querySelector(".copy-hint-text");
+              if (h) h.textContent = "点一下复制";
+            }
+            if (card) {
+              card.classList.add("copied");
+              var hint = card.querySelector(".copy-hint-text");
+              if (hint) hint.textContent = "已复制 ✓";
+            }
+            showToast("已复制，切回 X 粘贴就行");
+          }
+          function fallback() {
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.setAttribute("readonly", "");
+            ta.style.position = "fixed"; ta.style.opacity = "0"; ta.style.top = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); done(); }
+            catch (e) { showToast("复制失败，长按文字手动复制", true); }
+            document.body.removeChild(ta);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(fallback);
+          } else { fallback(); }
+        }
+
+        /* ---------- results ---------- */
+        var TAG_CLASS = { "直译版": "faithful", "吐槽版": "roast", "正常版": "plain", "玩梗版": "meme", "AI发挥版": "free" };
+        var COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+
+        var STYLES = ["直译版", "吐槽版", "正常版", "玩梗版"];
+
+        function slotTop(styleLabel, hintText) {
+          var top = document.createElement("div");
+          top.className = "card-top";
+          var tag = document.createElement("span");
+          tag.className = "tag " + (TAG_CLASS[styleLabel] || "plain");
+          tag.textContent = styleLabel;
+          var hint = document.createElement("span");
+          hint.className = "copy-hint";
+          hint.textContent = hintText;
+          top.appendChild(tag); top.appendChild(hint);
+          return top;
+        }
+
+        function setSlotPending(slot, styleLabel) {
+          slot.className = "card slot";
+          slot.removeAttribute("role");
+          slot.onclick = null;
+          slot.innerHTML = "";
+          slot.appendChild(slotTop(styleLabel, "生成中…"));
+          var body = document.createElement("div");
+          body.className = "slot-pending";
+          var spin = document.createElement("span");
+          spin.className = "mini-spin";
+          body.appendChild(spin);
+          body.appendChild(document.createTextNode("生成中…"));
+          slot.appendChild(body);
+        }
+
+        function createSlot(styleLabel) {
+          var slot = document.createElement("div");
+          setSlotPending(slot, styleLabel);
+          return slot;
+        }
+
+        function fillSlot(slot, opt) {
+          slot.className = "card";
+          slot.setAttribute("role", "button");
+          slot.innerHTML = "";
+
+          var top = document.createElement("div");
+          top.className = "card-top";
+          var tag = document.createElement("span");
+          tag.className = "tag " + (TAG_CLASS[opt.style] || "plain");
+          tag.textContent = opt.style || "版本";
+          var hint = document.createElement("span");
+          hint.className = "copy-hint";
+          hint.innerHTML = COPY_ICON + '<span class="copy-hint-text">点一下复制</span>';
+          top.appendChild(tag); top.appendChild(hint);
+
+          var en = document.createElement("div");
+          en.className = "en";
+          en.textContent = opt.en;
+
+          slot.appendChild(top);
+          slot.appendChild(en);
+
+          if (opt.en) {
+            var ec = document.createElement("div");
+            ec.className = "en-count";
+            ec.textContent = opt.en.length + " / 280 字符";
+            slot.appendChild(ec);
+          }
+          if (opt.zh) {
+            var zh = document.createElement("div");
+            zh.className = "zh";
+            zh.textContent = opt.zh;
+            slot.appendChild(zh);
+          }
+          slot.onclick = function () { copyText(opt.en, slot); };
+        }
+
+        function failSlot(slot, styleLabel, onRetry) {
+          slot.className = "card slot";
+          slot.removeAttribute("role");
+          slot.onclick = null;
+          slot.innerHTML = "";
+          slot.appendChild(slotTop(styleLabel, "没生成出来"));
+          var body = document.createElement("div");
+          body.className = "slot-fail";
+          body.textContent = "这一条没生成出来，网络或者模型抽风了。";
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "retry-btn";
+          btn.textContent = "重试这一条";
+          btn.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            onRetry();
+          });
+          body.appendChild(document.createElement("br"));
+          body.appendChild(btn);
+          slot.appendChild(body);
+        }
+
+        /* shown in place of AI发挥版 when no original post was pasted:
+           that style reads the post itself, so without one it cannot run */
+        function freeHintCard() {
+          var card = document.createElement("div");
+          card.className = "card slot";
+          card.appendChild(slotTop("AI发挥版", "需要原帖"));
+          var body = document.createElement("div");
+          body.className = "slot-note";
+          body.textContent = "这一条不看你写的话，是 AI 自己读对方的帖子想出来的。想用它，先把对方的帖子粘到上面那个框里，再点一次生成。";
+          card.appendChild(body);
+          return card;
+        }
+
+        /* ---------- generate ---------- */
+        var generating = false;
+        var currentRun = 0;
+        var progressState = null;
+        function setLoading(on) {
+          generating = on;
+          genBtn.disabled = on;
+          genBtn.innerHTML = on ? '<span class="spin"></span>正在生成…' : "生成英文";
+        }
+
+        /* the "en" field must be English, but a model occasionally echoes his
+           Chinese straight back into it (seen in the wild: a whole roast card
+           in Chinese). Count CJK characters and reject when they dominate,
+           so the retry chain can correct it instead of showing Chinese as
+           if it were the English version. */
+        function mostlyChinese(s) {
+          if (!s) return false;
+          var str = String(s);
+          var cjk = (str.match(/[㐀-鿿豈-﫿]/g) || []).length;
+          return cjk >= 3 && cjk / str.length > 0.2;
+        }
+
+        function cleanOptions(data) {
+          if (data && Array.isArray(data.options)) {
+            var clean = data.options.filter(function (o) { return o && o.en; }).slice(0, 3);
+            return clean.length ? clean : null;
+          }
+          return null;
+        }
+
+        function parseOptions(raw) {
+          if (!raw) return null;
+          var text = String(raw).trim();
+          var fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (fence) text = fence[1].trim();
+          var start = text.indexOf("{"), end = text.lastIndexOf("}");
+          if (start > -1 && end > start) text = text.slice(start, end + 1);
+
+          /* 1) straight parse */
+          try { var r = cleanOptions(JSON.parse(text)); if (r) return r; } catch (e) {}
+
+          /* 2) trailing commas */
+          var fixed = text.replace(/,\s*([}\]])/g, "$1");
+          try { var r2 = cleanOptions(JSON.parse(fixed)); if (r2) return r2; } catch (e) {}
+
+          /* 3) truncated reply: keep the complete options, close the JSON by hand */
+          var cut = fixed.length;
+          while (cut > 10) {
+            cut = fixed.lastIndexOf("}", cut - 1);
+            if (cut < 0) break;
+            try { var r3 = cleanOptions(JSON.parse(fixed.slice(0, cut + 1) + "]}")); if (r3) return r3; } catch (e) {}
+          }
+
+          /* 4) last resort: pull each option's fields out one by one */
+          var found = [];
+          var re = /"style"\s*:\s*"([^"]*)"\s*,\s*"en"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,\s*"zh"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+          var m;
+          while ((m = re.exec(text)) !== null && found.length < 3) {
+            try {
+              found.push({ style: m[1], en: JSON.parse('"' + m[2] + '"'), zh: JSON.parse('"' + m[3] + '"') });
+            } catch (e) {}
+          }
+          return found.length ? found : null;
+        }
+
+        genBtn.addEventListener("click", function () {
+          if (generating) return;
+          hideError();
+
+          var key = getKey();
+          if (!key) {
+            showError("还没有 API key。去 platform.openai.com 创建一个 API key，粘贴到下面设置里，key 只存在你这台设备本地。");
+            settingsBox.open = true;
+            settingsBox.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+          }
+          var mine = myInput.value.trim();
+          var post = postInput.value.trim();
+          if (!mine && !post) {
+            showError("先写一句你想说的话；或者把对方的帖子粘进来，就能直接生成一条 AI 自己想的「AI 发挥版」。");
+            myInput.focus();
+            return;
+          }
+
+          var userMsg = post
+            ? "对方的帖子（the post I am replying to）:\n\"\"\"\n" + post + "\n\"\"\"\n\n我想说的话（what I want to say, in Chinese）:\n\"\"\"\n" + mine + "\n\"\"\""
+            : "我想说的话（what I want to say, in Chinese）:\n\"\"\"\n" + mine + "\n\"\"\"";
+          /* AI发挥版 only ever sees the post, never his Chinese */
+          var freeMsg = "对方的帖子（the post I am replying to）:\n\"\"\"\n" + post + "\n\"\"\"";
+
+          /* which styles run this time: the four translation styles need his
+             Chinese; AI发挥版 needs the original post. If he pasted a post but
+             hasn't thought of anything to say yet, only AI发挥版 runs. */
+          var runStyles = mine ? STYLES.slice() : [];
+          if (post) runStyles.push("AI发挥版");
+
+          setLoading(true);
+
+          /* all styles in parallel, one request each: every card renders
+             the moment its own request returns, instead of all of them waiting
+             on one long generation */
+          var runId = ++currentRun;
+          progressState = { done: 0, settled: 0, total: runStyles.length };
+          var errors = [];
+
+          results.innerHTML = "";
+          resultsHead.className = "results-head show";
+          resultsHint.textContent = "生成中 · 已出 0/" + runStyles.length;
+
+          var slots = runStyles.map(function (styleLabel) {
+            var slot = createSlot(styleLabel);
+            results.appendChild(slot);
+            return slot;
+          });
+          /* no post pasted: AI发挥版 cannot run, so say why instead */
+          if (mine && !post) results.appendChild(freeHintCard());
+          setTimeout(function () {
+            resultsHead.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 60);
+
+          var jobs = slots.map(function (slot, i) {
+            var msg = runStyles[i] === "AI发挥版" ? freeMsg : userMsg;
+            return runStyle(runId, slot, runStyles[i], key, msg, errors);
+          });
+          Promise.all(jobs).then(function () { setLoading(false); });
+        });
+
+        function updateProgress(runId) {
+          if (runId !== currentRun || !progressState) return;
+          if (progressState.settled >= progressState.total) {
+            resultsHint.textContent = progressState.done > 0
+              ? "不满意就再点一次「生成英文」"
+              : "一条都没出来，检查一下网络再试";
+          } else {
+            resultsHint.textContent = "生成中 · 已出 " + progressState.done + "/" + progressState.total;
+          }
+        }
+
+        function runStyle(runId, slot, styleLabel, key, userMsg, errors) {
+          return requestStyle(key, userMsg, styleLabel).then(function (opt) {
+            if (runId !== currentRun) return;
+            fillSlot(slot, opt);
+            progressState.done++;
+            progressState.settled++;
+            updateProgress(runId);
+          }).catch(function (err) {
+            if (runId !== currentRun) return;
+            errors.push(err);
+            progressState.settled++;
+            updateProgress(runId);
+            failSlot(slot, styleLabel, function () {
+              progressState.settled--;
+              setSlotPending(slot, styleLabel);
+              updateProgress(runId);
+              runStyle(runId, slot, styleLabel, key, userMsg, errors);
+            });
+            /* only when every style failed do we also raise the big error box */
+            if (progressState.settled >= progressState.total && progressState.done === 0) {
+              var e0 = errors[0];
+              if (e0 && e0.status) showError(friendlyError(e0.status, e0.detail));
+              else if (e0 && e0.badLang) showError("模型连着几次都把英文版写成了中文，页面带着纠正说明自动重试了也没改过来。再点一次「生成英文」试试，或者去设置里换个模型。");
+              else if (e0 && e0.badFormat) showError("几个模型返回的格式都不对，可能是网络把返回截断了。检查一下网络，再点一次「生成英文」。");
+              else showError("网络问题，没连上 OpenAI。检查一下网络再试一次。");
+            }
+          });
+        }
+
+        function requestStyle(key, userMsg, styleLabel) {
+          var queue = [getModel()].concat(FALLBACK_MODELS.filter(function (m) { return m !== getModel(); }));
+          /* once any attempt comes back with Chinese in the "en" field, every
+             later attempt in this chain carries the correction instruction */
+          var hardEnglish = false;
+          var chain = Promise.reject({ start: true });
+          queue.forEach(function (m) {
+            chain = chain.catch(function (err) {
+              /* only fall through to the next model for format failures,
+                 Chinese-in-English failures and model-level rejections;
+                 a bad key or empty balance stops here */
+              if (err && !err.start && !err.badFormat && !err.badLang && !(err.status === 400 || err.status === 404)) throw err;
+              if (err && err.badLang) hardEnglish = true;
+              return requestCompletion(key, m, userMsg, styleLabel, hardEnglish);
+            });
+          });
+          return chain;
+        }
+
+        function systemPromptFor(styleLabel) {
+          var extra = "";
+          if (styleLabel === "直译版") {
+            extra = "\nFAITHFUL MODE for this request: translate his Chinese word-for-word in meaning. Do NOT expand, embellish, or add anything he did not say — no extra jokes, no added reactions, no rhetorical questions, no hooking onto the original post beyond what his own words already reference. At most, lightly natural slang where his wording already invites it. Same length in, same length out.";
+          } else if (styleLabel === "吐槽版") {
+            extra = "\nROAST MODE for this request: attitude is the entire engine — mocking, a little mean, unimpressed, eye-roll energy; rhetorical questions and sarcastic understatement are welcome. Light slang is fine, but HARD BANS: no meme formats or templates, no \"nobody: ...\" structures, no POV, no fandom in-jokes, no gif-caption-style lines (that machinery belongs to 玩梗版 and must not leak in here). The mockery must target a specific claim, detail, or person in the post or in his Chinese — never a generic \"lol this is bad\".";
+          } else if (styleLabel === "正常版") {
+            extra = "\nPLAIN MODE for this request: say exactly what he said, but the way a native speaker would casually phrase it in everyday chat — NOT a sentence-by-sentence translation. Add the simple everyday frills real people actually use: contractions, gonna/wanna/kinda, fillers like yeah, ngl, tbh, honestly, and natural sentence shapes; a light lol at the end is fine when it fits. Keep ALL of his content and his level of enthusiasm — do NOT add jokes, memes, slang flexing, extra opinions, examples, or questions he did not ask, and do NOT tone him down. If the output could pass as a dictionary translation, you failed.";
+          } else if (styleLabel === "AI发挥版") {
+            extra = "\nFREESTYLE MODE for this request: IGNORE his Chinese completely — do not translate it, do not paraphrase it, do not let it steer the reply. Read the original post and reply to the post ITSELF: react to what the post is actually about — its claim, its joke, its news — the way an ordinary person scrolling X would. Build the whole reply around ONE specific detail, number, claim, or wording in the post, and make it instantly clear what you are reacting to: a reader who sees the post and then this reply should never have to guess the connection. Shapes that work: a genuine take, a pointed question about that detail, a dry aside, a short honest reaction. HARD BANS: no generic praise or empty agreement (\"Great post\" / \"So true\"); do NOT drag in his piano studies, grad school, Claude Code, Codex, or his builder life unless the post itself is about music, piano, AI tools, or studying — for unrelated topics (politics, entertainment, everyday life) he is just a normal person watching it happen, and forcing his identity in is exactly what makes a reply read as nonsense; do NOT invent specific events, numbers, opinions, or experiences for him. Voice: first person, loose fragments, incomplete thoughts, casual slang welcome, an emoji or two is fine. Short like a real reply: 1-3 short lines, under ~240 characters.";
+          } else if (styleLabel === "玩梗版") {
+            extra = "\nMEME MODE for this request: build the whole reply around exactly ONE recognizable, currently-used internet trope, meme format, or fandom in-joke, chosen because it fits this specific post — formats like \"tell me you X without telling me you X\", POV:, \"nobody: ... / me:\", it's giving ___, certified ___ moment, ___ arc, canon event, rent free, main character energy, NPC energy, skill issue, \"bro really said ___\", \"this is fine\" energy. The humor must come from the format doing the work; his actual point still has to land inside it. No generic roasting without the format, and keep it to the one meme — do not stack two.";
+          }
+          return SYSTEM_PROMPT + "\nThis request overrides the four-version instruction above: produce ONLY the " + styleLabel + " version, exactly one option, nothing else. Return ONLY valid JSON in the same shape with a one-element array: {\"options\":[{\"style\":\"" + styleLabel + "\",\"en\":\"...\",\"zh\":\"...\"}]}" + extra;
+        }
+
+        function requestCompletion(key, model, userMsg, styleLabel, hardEnglish) {
+          var sys = systemPromptFor(styleLabel);
+          if (hardEnglish) {
+            sys += "\n\nRETRY CORRECTION: your previous attempt put Chinese text in the \"en\" field — that is a hard failure, not a style choice. This time the \"en\" value must be written fully in English: not one Chinese character, and never his Chinese sentence copied or lightly reworded. Translate the MEANING into natural English instead.";
+          }
+          var body = {
+            model: model,
+            messages: [
+              { role: "system", content: sys },
+              { role: "user", content: userMsg }
+            ],
+            response_format: { type: "json_object" }
+          };
+          if (/^gpt-5/.test(model)) {
+            /* turning a short comment into English needs almost no reasoning;
+               minimal effort is the single biggest latency cut for gpt-5 */
+            body.reasoning_effort = "minimal";
+            body.max_completion_tokens = 600;
+          } else {
+            body.max_tokens = 600;
+          }
+
+          return fetch(API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + key
+            },
+            body: JSON.stringify(body)
+          }).then(function (res) {
+            if (!res.ok) {
+              return res.text().then(function (t) {
+                var detail = "";
+                try { var j = JSON.parse(t); detail = (j.error && j.error.message) || ""; } catch (e) {}
+                throw { status: res.status, detail: detail };
+              });
+            }
+            return res.json();
+          }).then(function (data) {
+            /* the tokens were spent even if the text turns out unparseable,
+               so the usage gets booked before anything else happens */
+            recordUsage(model, data && data.usage);
+            var content = data && data.choices && data.choices[0] && data.choices[0].message
+              ? data.choices[0].message.content : "";
+            var options = parseOptions(content);
+            if (!options) throw { badFormat: true };
+            var one = options[0];
+            /* language guard: Chinese in the English field is a failed
+               generation, not a result — send it back through the retry
+               chain with the correction instruction attached */
+            if (mostlyChinese(one.en)) throw { badLang: true };
+            one.style = styleLabel;
+            return one;
+          });
+        }
+
+        /* ---------- model picker ---------- */
+        function refreshModelNote() {
+          modelNote.textContent = "当前用的是 " + getModel() + " 生成 · 在下面设置里可以换";
+        }
+        MODELS.forEach(function (m) {
+          var opt = document.createElement("option");
+          opt.value = m.id;
+          opt.textContent = m.label;
+          modelSelect.appendChild(opt);
+        });
+        modelSelect.value = getModel();
+        modelSelect.addEventListener("change", function () {
+          try { localStorage.setItem(LS_MODEL_KEY, modelSelect.value); } catch (e) {}
+          refreshModelNote();
+          showToast("模型已换成 " + modelSelect.value);
+        });
+
+        /* ---------- usage & cost estimate (local bookkeeping) ---------- */
+        /* official per-1M-token prices; cached input is billed cheaper */
+        var PRICES = {
+          "gpt-5-mini": { in: 0.25, cached: 0.025, out: 2.00 },
+          "gpt-5.1": { in: 1.25, cached: 0.125, out: 10.00 },
+          "gpt-4o-mini": { in: 0.15, cached: 0.075, out: 0.60 }
+        };
+        var LS_USAGE = "kyson_comment_helper_usage";
+        var usageBtn = document.getElementById("usageBtn");
+        var usagePanel = document.getElementById("usagePanel");
+        var usageRows = document.getElementById("usageRows");
+
+        function blankUsage() { return { requests: 0, byModel: {} }; }
+        function loadUsage() {
+          try {
+            var u = JSON.parse(localStorage.getItem(LS_USAGE) || "null");
+            if (u && typeof u.requests === "number" && u.byModel) return u;
+          } catch (e) {}
+          return blankUsage();
+        }
+        var usageStats = loadUsage();
+        function saveUsage() {
+          try { localStorage.setItem(LS_USAGE, JSON.stringify(usageStats)); } catch (e) {}
+        }
+        function recordUsage(model, usage) {
+          if (!usage) return;
+          var m = usageStats.byModel[model];
+          if (!m) { m = { requests: 0, prompt: 0, cached: 0, completion: 0 }; usageStats.byModel[model] = m; }
+          m.requests++;
+          m.prompt += usage.prompt_tokens || 0;
+          m.completion += usage.completion_tokens || 0;
+          m.cached += (usage.prompt_tokens_details && usage.prompt_tokens_details.cached_tokens) || 0;
+          usageStats.requests++;
+          saveUsage();
+          renderUsage();
+        }
+        function modelCost(model, m) {
+          var p = PRICES[model];
+          if (!p) return 0;
+          var fresh = Math.max(0, m.prompt - m.cached);
+          return (fresh * p.in + m.cached * p.cached + m.completion * p.out) / 1000000;
+        }
+        function fmtUSD(v) { return "$" + (v >= 1 ? v.toFixed(2) : v.toFixed(4)); }
+        function fmtNum(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+        function usageRow(label, value, isTotal) {
+          var row = document.createElement("div");
+          row.className = "usage-row" + (isTotal ? " total" : "");
+          var l = document.createElement("span");
+          l.textContent = label;
+          var b = document.createElement("b");
+          b.textContent = value;
+          row.appendChild(l); row.appendChild(b);
+          return row;
+        }
+        function renderUsage() {
+          var total = 0, totalTok = 0;
+          usageRows.innerHTML = "";
+          var ids = Object.keys(usageStats.byModel);
+          if (!ids.length) {
+            usageRows.appendChild(usageRow("还没生成过", "$0.0000"));
+          }
+          ids.forEach(function (id) {
+            var m = usageStats.byModel[id];
+            var c = modelCost(id, m);
+            total += c;
+            totalTok += m.prompt + m.completion;
+            usageRows.appendChild(usageRow(
+              id + " · " + m.requests + " 次 · 输入 " + fmtNum(m.prompt) + " / 输出 " + fmtNum(m.completion) + " token",
+              fmtUSD(c), false));
+          });
+          if (ids.length) {
+            usageRows.appendChild(usageRow(
+              "合计 " + usageStats.requests + " 次请求 · " + fmtNum(totalTok) + " token",
+              fmtUSD(total) + " · 约 ¥" + (total * 7.3).toFixed(2), true));
+          }
+          usageBtn.textContent = "用量 · 已花约 " + fmtUSD(total) + "（点开看明细）";
+        }
+        usageBtn.addEventListener("click", function () {
+          usagePanel.className = "usage-panel" + (usagePanel.className.indexOf("show") > -1 ? "" : " show");
+        });
+        document.getElementById("usageResetBtn").addEventListener("click", function () {
+          usageStats = blankUsage();
+          saveUsage();
+          renderUsage();
+          showToast("用量统计已清零");
+        });
+
+        refreshKeyUI();
+        refreshModelNote();
+        renderUsage();
+        updateCount();
+      })();
+    </script>
+  </body>
+</html>
