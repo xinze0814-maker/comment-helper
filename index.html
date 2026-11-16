@@ -95,7 +95,6 @@
       }
       textarea:focus{ border-color:var(--accent); }
       textarea::placeholder{ color:#565c64; }
-      #postInput{ min-height:74px; }
       #myInput{ min-height:104px; }
       .count{ font-size:12px; color:var(--faint); font-variant-numeric:tabular-nums; }
 
@@ -366,17 +365,6 @@
 
       <div class="field">
         <div class="field-head">
-          <label for="postInput">对方的帖子 <span class="opt">可不填</span></label>
-          <span>
-            <button type="button" class="mini-btn" id="pastePostBtn">粘贴</button>
-            <button type="button" class="mini-btn dim" id="clearPostBtn">清空</button>
-          </span>
-        </div>
-        <textarea id="postInput" rows="3" placeholder="把你要回复的那条帖子粘进来，生成时会扣住它里面的具体细节，不说空话。不填也行。填了还会多出一条「AI 发挥版」：不看你写的话，它自己读帖子写一条。"></textarea>
-      </div>
-
-      <div class="field">
-        <div class="field-head">
           <label for="myInput">我想说的话（中文）</label>
           <span>
             <span class="count" id="myCount">0 字</span>
@@ -468,16 +456,15 @@
         }
 
         var SYSTEM_PROMPT = [
-          "The user is a Chinese piano grad student in NYC building an English X account (@KysonBuilds) about his real AI work with Claude Code and Codex. He types what he wants to say in Chinese. Produce 4 English versions of his intended comment: (1) 直译版 strictly faithful translation, (2) 吐槽版 mocking roast — attitude, not plot devices, (3) 正常版 his exact meaning in relaxed everyday chat English with casual frills — never a straight translation, (4) 玩梗版 built entirely around one current internet trope, meme format, or fandom in-joke.",
-          "The four styles must pull clearly apart from each other in HOW they work, not just in tone words. 吐槽版 and 玩梗版 are the pair that must never blur: 吐槽版 runs on attitude only — dry, sharp, dismissive, a little mean; it may use light slang, but NO meme formats, NO fandom in-jokes, NO gif-style reaction lines. 玩梗版 puts its entire weight into one recognized meme or trope (for example \"tell me you X without telling me you X\", POV, \"nobody: ... me:\", it's giving ___, certified ___ moment, rent free, main character energy, skill issue, ___ arc, canon event, NPC energy, \"bro really said ___\") — the humor comes from the format itself, not from roasting anyone. 正常版 sits in a different lane from both: zero jokes, zero memes, zero roast — just how a native speaker would casually say exactly this in everyday chat, and it must never read like a sentence-by-sentence translation (that is 直译版's job).",
-          "直译版 is special and strictly faithful: translate exactly what he said and nothing else. A light sprinkle of natural slang is fine where it fits the wording he already used, but NEVER expand his sentence — do not add jokes, reactions, questions, examples, context, or any meaning he did not say. Keep the English at roughly the same length as his Chinese: if he wrote one short line, the translation is one short line. The other three styles may play and embellish; the 直译版 must not.",
-          "Voice rules, all mandatory: write like a real native user casually replying — fragmented sentences, incomplete thoughts, lowercase starts are fine, loose logic. Slang intensity differs per style: 吐槽版 and 玩梗版 go heavy (slop, cooking, yolo mode, bruh, ngl, lowkey, fr, 💀 😭); 正常版 uses only light, everyday fillers and shortcuts (ngl, tbh, kinda, gonna, yeah, lol); 直译版 stays nearly clean. Hook onto a specific detail of the original post when one is provided, never empty agreement (\"Great post\", \"So true\" are banned); keep each option short like a real reply (1-3 short lines, under ~240 characters); never sound like a product announcement or a listicle; never translate literally — say it the way an American user actually would (this never-translate-literally rule applies to 吐槽版, 正常版, and 玩梗版; 直译版 alone is the faithful translation).",
+          "The user is a Chinese piano grad student in NYC building an English X account (@KysonBuilds) about his real AI work with Claude Code and Codex. He types what he wants to say in Chinese. Produce 2 English versions of his intended comment: (1) 直译版 strictly faithful translation in normal, clean language, (2) 正常版 his exact meaning in relaxed everyday American chat English, using the casual abbreviations and shortcuts Americans actually type (lol, btw, ngl, tbh, fr, kinda, gonna, wanna) — never a straight translation.",
+          "The two styles must pull clearly apart from each other in HOW they work, not just in tone words. 直译版 is the faithful one: normal standard English, sentence by sentence, nothing added. 正常版 says exactly the same thing but the way a native speaker would casually type it in a chat or reply — abbreviations, contractions, fillers, loose fragments — and it must never read like a sentence-by-sentence translation (that is 直译版's job). Neither style adds jokes, memes, roasts, opinions, or any meaning he did not say.",
+          "直译版 is special and strictly faithful: translate exactly what he said and nothing else. NEVER expand his sentence — do not add jokes, reactions, questions, examples, context, or any meaning he did not say. Keep the English at roughly the same length as his Chinese: if he wrote one short line, the translation is one short line. 正常版 may rephrase into casual chat English and sprinkle in everyday abbreviations, but it adds no new meaning either; the 直译版 must not even rephrase.",
+          "Voice rules, all mandatory: write like a real native user casually replying — fragmented sentences, incomplete thoughts, lowercase starts are fine, loose logic. 正常版 uses everyday fillers and abbreviations (lol, btw, ngl, tbh, fr, kinda, gonna, wanna, yeah); 直译版 stays clean standard English. Never add empty agreement (\"Great post\", \"So true\" are banned); keep each option short like a real reply (1-3 short lines, under ~240 characters); never sound like a product announcement or a listicle; never translate literally in 正常版 — say it the way an American user actually would (直译版 alone is the faithful translation).",
           "Also give one short Chinese line under each option translating it back loosely so he knows what he is sending.",
           "LANGUAGE LOCK (hard rule, no exceptions): the \"en\" field of every option must be 100% English — zero Chinese characters, no pinyin, and never a copy or near-copy of his Chinese sentence. Chinese text appears ONLY in the \"zh\" field. If you catch yourself writing Chinese in \"en\", stop and rewrite that field in English before returning.",
-          "Return ONLY valid JSON, no markdown fences, no extra text: {\"options\":[{\"style\":\"直译版\",\"en\":\"...\",\"zh\":\"...\"},{\"style\":\"吐槽版\",\"en\":\"...\",\"zh\":\"...\"},{\"style\":\"正常版\",\"en\":\"...\",\"zh\":\"...\"},{\"style\":\"玩梗版\",\"en\":\"...\",\"zh\":\"...\"}]}"
+          "Return ONLY valid JSON, no markdown fences, no extra text: {\"options\":[{\"style\":\"直译版\",\"en\":\"...\",\"zh\":\"...\"},{\"style\":\"正常版\",\"en\":\"...\",\"zh\":\"...\"}]}"
         ].join("\n");
 
-        var postInput = document.getElementById("postInput");
         var myInput = document.getElementById("myInput");
         var myCount = document.getElementById("myCount");
         var genBtn = document.getElementById("genBtn");
@@ -542,22 +529,8 @@
         /* ---------- inputs ---------- */
         function updateCount() { myCount.textContent = myInput.value.trim().length + " 字"; }
         myInput.addEventListener("input", updateCount);
-        document.getElementById("clearPostBtn").addEventListener("click", function () {
-          postInput.value = ""; postInput.focus();
-        });
         document.getElementById("clearMyBtn").addEventListener("click", function () {
           myInput.value = ""; updateCount(); myInput.focus();
-        });
-        document.getElementById("pastePostBtn").addEventListener("click", function () {
-          if (navigator.clipboard && navigator.clipboard.readText) {
-            navigator.clipboard.readText().then(function (t) {
-              if (t) { postInput.value = t; showToast("已粘贴对方的帖子"); }
-              else showToast("剪贴板是空的", true);
-            }).catch(function () { showToast("读不到剪贴板，长按输入框粘贴吧", true); });
-          } else {
-            showToast("长按输入框粘贴吧", true);
-            postInput.focus();
-          }
         });
         var moodBtns = document.querySelectorAll(".mood");
         for (var i = 0; i < moodBtns.length; i++) {
@@ -616,10 +589,10 @@
         }
 
         /* ---------- results ---------- */
-        var TAG_CLASS = { "直译版": "faithful", "吐槽版": "roast", "正常版": "plain", "玩梗版": "meme", "AI发挥版": "free" };
+        var TAG_CLASS = { "直译版": "faithful", "正常版": "plain" };
         var COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
 
-        var STYLES = ["直译版", "吐槽版", "正常版", "玩梗版"];
+        var STYLES = ["直译版", "正常版"];
 
         function slotTop(styleLabel, hintText) {
           var top = document.createElement("div");
@@ -714,19 +687,6 @@
           slot.appendChild(body);
         }
 
-        /* shown in place of AI发挥版 when no original post was pasted:
-           that style reads the post itself, so without one it cannot run */
-        function freeHintCard() {
-          var card = document.createElement("div");
-          card.className = "card slot";
-          card.appendChild(slotTop("AI发挥版", "需要原帖"));
-          var body = document.createElement("div");
-          body.className = "slot-note";
-          body.textContent = "这一条不看你写的话，是 AI 自己读对方的帖子想出来的。想用它，先把对方的帖子粘到上面那个框里，再点一次生成。";
-          card.appendChild(body);
-          return card;
-        }
-
         /* ---------- generate ---------- */
         var generating = false;
         var currentRun = 0;
@@ -804,24 +764,15 @@
             return;
           }
           var mine = myInput.value.trim();
-          var post = postInput.value.trim();
-          if (!mine && !post) {
-            showError("先写一句你想说的话；或者把对方的帖子粘进来，就能直接生成一条 AI 自己想的「AI 发挥版」。");
+          if (!mine) {
+            showError("先写一句你想说的话。");
             myInput.focus();
             return;
           }
 
-          var userMsg = post
-            ? "对方的帖子（the post I am replying to）:\n\"\"\"\n" + post + "\n\"\"\"\n\n我想说的话（what I want to say, in Chinese）:\n\"\"\"\n" + mine + "\n\"\"\""
-            : "我想说的话（what I want to say, in Chinese）:\n\"\"\"\n" + mine + "\n\"\"\"";
-          /* AI发挥版 only ever sees the post, never his Chinese */
-          var freeMsg = "对方的帖子（the post I am replying to）:\n\"\"\"\n" + post + "\n\"\"\"";
+          var userMsg = "我想说的话（what I want to say, in Chinese）:\n\"\"\"\n" + mine + "\n\"\"\"";
 
-          /* which styles run this time: the four translation styles need his
-             Chinese; AI发挥版 needs the original post. If he pasted a post but
-             hasn't thought of anything to say yet, only AI发挥版 runs. */
-          var runStyles = mine ? STYLES.slice() : [];
-          if (post) runStyles.push("AI发挥版");
+          var runStyles = STYLES.slice();
 
           setLoading(true);
 
@@ -841,15 +792,12 @@
             results.appendChild(slot);
             return slot;
           });
-          /* no post pasted: AI发挥版 cannot run, so say why instead */
-          if (mine && !post) results.appendChild(freeHintCard());
           setTimeout(function () {
             resultsHead.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 60);
 
           var jobs = slots.map(function (slot, i) {
-            var msg = runStyles[i] === "AI发挥版" ? freeMsg : userMsg;
-            return runStyle(runId, slot, runStyles[i], key, msg, errors);
+            return runStyle(runId, slot, runStyles[i], key, userMsg, errors);
           });
           Promise.all(jobs).then(function () { setLoading(false); });
         });
@@ -916,17 +864,11 @@
         function systemPromptFor(styleLabel) {
           var extra = "";
           if (styleLabel === "直译版") {
-            extra = "\nFAITHFUL MODE for this request: translate his Chinese word-for-word in meaning. Do NOT expand, embellish, or add anything he did not say — no extra jokes, no added reactions, no rhetorical questions, no hooking onto the original post beyond what his own words already reference. At most, lightly natural slang where his wording already invites it. Same length in, same length out.";
-          } else if (styleLabel === "吐槽版") {
-            extra = "\nROAST MODE for this request: attitude is the entire engine — mocking, a little mean, unimpressed, eye-roll energy; rhetorical questions and sarcastic understatement are welcome. Light slang is fine, but HARD BANS: no meme formats or templates, no \"nobody: ...\" structures, no POV, no fandom in-jokes, no gif-caption-style lines (that machinery belongs to 玩梗版 and must not leak in here). The mockery must target a specific claim, detail, or person in the post or in his Chinese — never a generic \"lol this is bad\".";
+            extra = "\nFAITHFUL MODE for this request: translate his Chinese word-for-word in meaning. Do NOT expand, embellish, or add anything he did not say — no extra jokes, no added reactions, no rhetorical questions. At most, lightly natural slang where his wording already invites it. Same length in, same length out.";
           } else if (styleLabel === "正常版") {
-            extra = "\nPLAIN MODE for this request: say exactly what he said, but the way a native speaker would casually phrase it in everyday chat — NOT a sentence-by-sentence translation. Add the simple everyday frills real people actually use: contractions, gonna/wanna/kinda, fillers like yeah, ngl, tbh, honestly, and natural sentence shapes; a light lol at the end is fine when it fits. Keep ALL of his content and his level of enthusiasm — do NOT add jokes, memes, slang flexing, extra opinions, examples, or questions he did not ask, and do NOT tone him down. If the output could pass as a dictionary translation, you failed.";
-          } else if (styleLabel === "AI发挥版") {
-            extra = "\nFREESTYLE MODE for this request: IGNORE his Chinese completely — do not translate it, do not paraphrase it, do not let it steer the reply. Read the original post and reply to the post ITSELF: react to what the post is actually about — its claim, its joke, its news — the way an ordinary person scrolling X would. Build the whole reply around ONE specific detail, number, claim, or wording in the post, and make it instantly clear what you are reacting to: a reader who sees the post and then this reply should never have to guess the connection. Shapes that work: a genuine take, a pointed question about that detail, a dry aside, a short honest reaction. HARD BANS: no generic praise or empty agreement (\"Great post\" / \"So true\"); do NOT drag in his piano studies, grad school, Claude Code, Codex, or his builder life unless the post itself is about music, piano, AI tools, or studying — for unrelated topics (politics, entertainment, everyday life) he is just a normal person watching it happen, and forcing his identity in is exactly what makes a reply read as nonsense; do NOT invent specific events, numbers, opinions, or experiences for him. Voice: first person, loose fragments, incomplete thoughts, casual slang welcome, an emoji or two is fine. Short like a real reply: 1-3 short lines, under ~240 characters.";
-          } else if (styleLabel === "玩梗版") {
-            extra = "\nMEME MODE for this request: build the whole reply around exactly ONE recognizable, currently-used internet trope, meme format, or fandom in-joke, chosen because it fits this specific post — formats like \"tell me you X without telling me you X\", POV:, \"nobody: ... / me:\", it's giving ___, certified ___ moment, ___ arc, canon event, rent free, main character energy, NPC energy, skill issue, \"bro really said ___\", \"this is fine\" energy. The humor must come from the format doing the work; his actual point still has to land inside it. No generic roasting without the format, and keep it to the one meme — do not stack two.";
+            extra = "\nPLAIN MODE for this request: say exactly what he said, but the way a native speaker would casually phrase it in everyday chat — NOT a sentence-by-sentence translation. Add the simple everyday frills real people actually use: contractions, gonna/wanna/kinda, fillers and abbreviations like yeah, lol, btw, ngl, tbh, fr, honestly, and natural sentence shapes; a light lol at the end is fine when it fits. Keep ALL of his content and his level of enthusiasm — do NOT add jokes, memes, slang flexing, extra opinions, examples, or questions he did not ask, and do NOT tone him down. If the output could pass as a dictionary translation, you failed.";
           }
-          return SYSTEM_PROMPT + "\nThis request overrides the four-version instruction above: produce ONLY the " + styleLabel + " version, exactly one option, nothing else. Return ONLY valid JSON in the same shape with a one-element array: {\"options\":[{\"style\":\"" + styleLabel + "\",\"en\":\"...\",\"zh\":\"...\"}]}" + extra;
+          return SYSTEM_PROMPT + "\nThis request overrides the two-version instruction above: produce ONLY the " + styleLabel + " version, exactly one option, nothing else. Return ONLY valid JSON in the same shape with a one-element array: {\"options\":[{\"style\":\"" + styleLabel + "\",\"en\":\"...\",\"zh\":\"...\"}]}" + extra;
         }
 
         function requestCompletion(key, model, userMsg, styleLabel, hardEnglish) {
